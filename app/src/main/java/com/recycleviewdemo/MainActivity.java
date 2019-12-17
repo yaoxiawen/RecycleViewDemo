@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,10 @@ public class MainActivity extends AppCompatActivity {
     private LeftSnapHelper mSnapHelper;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
+    private int width = 100;
+    private int num = 0;
+    private int mCurBannerPosition = 0;
+    private int mLastBannerPosition = 0;
     private static final float STAY_SCALE = 0.8f;
 
     @Override
@@ -28,27 +33,61 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         rv = findViewById(R.id.ll_rv);
+
+        // TODO: 2019-12-17 mDataList的初始化
+
+        num = mDataList.size();
         mSnapHelper = new LeftSnapHelper();
         mLinearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         rv.setLayoutManager(mLinearLayoutManager);
-        rv.setAdapter();
+        rv.setAdapter(mAdapter = new RecyclerView.Adapter() {
+            @NonNull
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent,
+                    int viewType) {
+                return null;
+            }
+
+            @Override
+            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(width, width);
+                //params.setMargins(KluiUtils.dp2px(10), 0, KluiUtils.dp2px(10), 0);
+                itemView.setLayoutParams(params);
+                //ImageView imageView = (ImageView) itemView;
+                TestData data = (TestData) mBaseItem;
+                mImageView.setBackgroundResource(data.data);
+                itemView.setPivotX(0);
+                itemView.setPivotY(width / 2);
+                itemView.setScaleX(STAY_SCALE);
+                itemView.setScaleY(STAY_SCALE);
+            }
+
+            @Override
+            public int getItemCount() {
+                return Integer.MAX_VALUE;
+            }
+        });
         rv.addItemDecoration(new RecyclerView.ItemDecoration() {
             @Override
-            public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+            public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
+                    RecyclerView.State state) {
                 super.getItemOffsets(outRect, view, parent, state);
                 outRect.left = 10;
             }
         });
         mSnapHelper.attachToRecyclerView(rv);
-        mAdapter.addList(mDataList, true);
 
         rv.addOnScrollListener(mOnScrollListener);
         mAdapter.notifyDataSetChanged();
-        rv.post(() -> {
-            int mid = Integer.MAX_VALUE / 2;
-            int startPosition = mid - mid % num;
-            mLinearLayoutManager.scrollToPositionWithOffset(startPosition, 0);
-            pageScrolled();
+        rv.post(new Runnable() {
+            @Override
+            public void run() {
+
+                int mid = Integer.MAX_VALUE / 2;
+                int startPosition = mid - mid % num;
+                mLinearLayoutManager.scrollToPositionWithOffset(startPosition, 0);
+                pageScrolled();
+            }
         });
     }
 
@@ -100,9 +139,10 @@ public class MainActivity extends AppCompatActivity {
         View snapingView = mSnapHelper.findSnapView(mLinearLayoutManager);
         int snapingViewPosition = rv.getChildAdapterPosition(snapingView);
         Log.v("yxw", "snapingViewPosition:" + snapingViewPosition);
-        int currentSnapingOffset = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, snapingView)[0];
+        int currentSnapingOffset =
+                mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, snapingView)[0];
         int dis = Math.abs(currentSnapingOffset);
-        float offset = 1 - (1-STAY_SCALE) * ((float) dis / width);
+        float offset = 1 - (1 - STAY_SCALE) * ((float) dis / width);
         snapingView.setScaleX(offset);
         snapingView.setScaleY(offset);
 
@@ -110,26 +150,27 @@ public class MainActivity extends AppCompatActivity {
         View rightSnapingView = mLinearLayoutManager.findViewByPosition(snapingViewPosition + 1);
 
         if (rightSnapingView != null) {
-            int rightSnapingOffset =
-                    mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, rightSnapingView)[0];
+            int rightSnapingOffset = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager,
+                    rightSnapingView)[0];
             Log.v("yxw", "rightSnapingOffset:" + rightSnapingOffset);
             dis = Math.abs(rightSnapingOffset);
             if (dis > width) {
                 offset = STAY_SCALE;
             } else {
-                offset = 1 - (1-STAY_SCALE)* ((float) dis / width);
+                offset = 1 - (1 - STAY_SCALE) * ((float) dis / width);
             }
             rightSnapingView.setScaleX(offset);
             rightSnapingView.setScaleY(offset);
         }
         if (leftSnapingView != null) {
-            int leftSnapingOffset = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, leftSnapingView)[0];
+            int leftSnapingOffset = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager,
+                    leftSnapingView)[0];
             Log.v("yxw", "leftSnapingOffset:" + leftSnapingOffset);
             dis = Math.abs(leftSnapingOffset);
             if (dis > width) {
                 offset = STAY_SCALE;
             } else {
-                offset = 1 - (1-STAY_SCALE) * ((float) dis / width);
+                offset = 1 - (1 - STAY_SCALE) * ((float) dis / width);
             }
             leftSnapingView.setScaleX(offset);
             leftSnapingView.setScaleY(offset);
@@ -185,10 +226,12 @@ public class MainActivity extends AppCompatActivity {
             return findStartView(layoutManager, getHorizontalHelper(layoutManager));
         }
 
-        private View findStartView(RecyclerView.LayoutManager layoutManager, OrientationHelper helper) {
+        private View findStartView(RecyclerView.LayoutManager layoutManager,
+                OrientationHelper helper) {
 
             if (layoutManager instanceof LinearLayoutManager) {
-                int firstChild = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
+                int firstChild =
+                        ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
                 //int lastChild = ((LinearLayoutManager) layoutManager).findLastVisibleItemPosition();
                 if (firstChild == RecyclerView.NO_POSITION) {
                     return null;
