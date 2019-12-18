@@ -10,19 +10,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView rv;
-    private List<> mDataList = new ArrayList<>();
+    private List<Integer> mDataList = new ArrayList<>();
     private LeftSnapHelper mSnapHelper;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
-    private int width = 100;
+    private int width = 500;
     private int num = 0;
     private int mCurBannerPosition = 0;
     private int mLastBannerPosition = 0;
@@ -33,40 +35,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         rv = findViewById(R.id.ll_rv);
-
-        // TODO: 2019-12-17 mDataList的初始化
-
+        mDataList.add(R.drawable.image_practice_repast);
+        mDataList.add(R.drawable.image_practice_repast0);
+        mDataList.add(R.drawable.image_practice_repast1);
+        mDataList.add(R.drawable.image_practice_repast2);
+        mDataList.add(R.drawable.image_practice_repast_5);
+        mDataList.add(R.drawable.image_practice_repast_6);
         num = mDataList.size();
         mSnapHelper = new LeftSnapHelper();
         mLinearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         rv.setLayoutManager(mLinearLayoutManager);
-        rv.setAdapter(mAdapter = new RecyclerView.Adapter() {
-            @NonNull
-            @Override
-            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent,
-                    int viewType) {
-                return null;
-            }
-
-            @Override
-            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-                RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(width, width);
-                //params.setMargins(KluiUtils.dp2px(10), 0, KluiUtils.dp2px(10), 0);
-                itemView.setLayoutParams(params);
-                //ImageView imageView = (ImageView) itemView;
-                TestData data = (TestData) mBaseItem;
-                mImageView.setBackgroundResource(data.data);
-                itemView.setPivotX(0);
-                itemView.setPivotY(width / 2);
-                itemView.setScaleX(STAY_SCALE);
-                itemView.setScaleY(STAY_SCALE);
-            }
-
-            @Override
-            public int getItemCount() {
-                return Integer.MAX_VALUE;
-            }
-        });
+        rv.setAdapter(mAdapter = new MyAdapter(mDataList));
         rv.addItemDecoration(new RecyclerView.ItemDecoration() {
             @Override
             public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
@@ -82,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
         rv.post(new Runnable() {
             @Override
             public void run() {
-
                 int mid = Integer.MAX_VALUE / 2;
                 int startPosition = mid - mid % num;
                 mLinearLayoutManager.scrollToPositionWithOffset(startPosition, 0);
@@ -91,39 +69,54 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
+
+        private List<Integer> mDatas;
+
+        public MyAdapter(List<Integer> data) {
+            this.mDatas = data;
+        }
+
+        @NonNull
+        @Override
+        public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new MyViewHolder(
+                    LayoutInflater.from(parent.getContext()).inflate(R.layout.test, parent, false));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(width, width);
+            //params.setMargins(KluiUtils.dp2px(10), 0, KluiUtils.dp2px(10), 0);
+            holder.itemView.setLayoutParams(params);
+            holder.iv.setBackgroundResource(mDatas.get(position%num));
+            holder.itemView.setPivotX(0);
+            holder.itemView.setPivotY(width / 2);
+            holder.itemView.setScaleX(STAY_SCALE);
+            holder.itemView.setScaleY(STAY_SCALE);
+        }
+
+        @Override
+        public int getItemCount() {
+            return Integer.MAX_VALUE;
+        }
+
+        class MyViewHolder extends RecyclerView.ViewHolder {
+            ImageView iv;
+
+            public MyViewHolder(@NonNull View itemView) {
+                super(itemView);
+                iv = itemView.findViewById(R.id.iv);
+            }
+        }
+    }
+
     private RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             super.onScrollStateChanged(recyclerView, newState);
             if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                mCurBannerPosition = mLinearLayoutManager.findFirstVisibleItemPosition();
-                //
-                //View view = mLinearLayoutManager.findViewByPosition(mCurBannerPosition);
-                //float d = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, view)[0];
-                Log.v("yxw", "mCurBannerPosition:" + mCurBannerPosition % num);
-                //if (mCurBannerPosition < 0) {
-                //    return;
-                //}
-                //if (mCurBannerPosition <= 1) {
-                //    if (d<-width){
-                //        mLinearLayoutManager.scrollToPositionWithOffset(num + mCurBannerPosition+1, 0);
-                //    }else{
-                //        mLinearLayoutManager.scrollToPositionWithOffset(num + mCurBannerPosition, 0);
-                //    }
-                //    //if (d<-width){
-                //    //    mLinearLayoutManager.scrollToPositionWithOffset(num + mCurBannerPosition+1, KluiUtils.dp2px(60));
-                //    //}else{
-                //    //    mLinearLayoutManager.scrollToPositionWithOffset(num + mCurBannerPosition, -KluiUtils.dp2px(60));
-                //    //}
-                //
-                //} else if (3 * num - mCurBannerPosition <= 2) {
-                //    if (d<-width){
-                //        mLinearLayoutManager.scrollToPositionWithOffset(mCurBannerPosition - num+1, 0);
-                //    }else{
-                //        mLinearLayoutManager.scrollToPositionWithOffset(mCurBannerPosition - num, 0);
-                //    }
-                //
-                //}
+
             }
         }
 
@@ -175,32 +168,6 @@ public class MainActivity extends AppCompatActivity {
             leftSnapingView.setScaleX(offset);
             leftSnapingView.setScaleY(offset);
         }
-
-        Log.v("yxw", "width:" + width);
-        //snapingView.setScaleX(1 + 0.3f * (1 + Math.abs((float) currentSnapingOffset / width)));
-
-        //RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) snapingView.getLayoutParams();
-        //Log.v("yxw","height:"+params.height);
-        //params.height = (int) (params.height*offset);
-        //snapingView.setLayoutParams(params);
-        //Log.v("yxw","height:"+params.height);
-        //snapingView.setScaleX(offset);
-        //snapingView.setScaleY(offset);
-        //if (snapingView != null) {
-        //    if (currentSnapingOffset>0){
-        //        snapingView.setScaleX(1+0.5f*(1-currentSnapingOffset/width));
-        //        snapingView.setScaleY(1+0.5f*(1-currentSnapingOffset/width));
-        //    }else{
-        //        snapingView.setScaleX(1+0.5f*(1+currentSnapingOffset/width));
-        //        snapingView.setScaleY(1+0.5f*(1+currentSnapingOffset/width));
-        //    }
-        //
-        //}
-
-        //if (rightSnapingView != null) {
-        //    rightSnapingView.setScaleX(rightSnapingOffset/width);
-        //    rightSnapingView.setScaleY(rightSnapingOffset/width);
-        //}
     }
 
     private class LeftSnapHelper extends PagerSnapHelper {
