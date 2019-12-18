@@ -9,10 +9,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
@@ -24,11 +24,9 @@ public class MainActivity extends AppCompatActivity {
     private LeftSnapHelper mSnapHelper;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLinearLayoutManager;
-    private int width = 500;
+    private int height = 550;
     private int num = 0;
-    private int mCurBannerPosition = 0;
-    private int mLastBannerPosition = 0;
-    private static final float STAY_SCALE = 0.8f;
+    private static final float STAY_SCALE = 0.9f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
             public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
                     RecyclerView.State state) {
                 super.getItemOffsets(outRect, view, parent, state);
-                outRect.left = 10;
+                //outRect.left = 50;
             }
         });
         mSnapHelper.attachToRecyclerView(rv);
@@ -86,14 +84,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(width, width);
-            //params.setMargins(KluiUtils.dp2px(10), 0, KluiUtils.dp2px(10), 0);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(height+50, height);
+            params.setMargins(50, 0, 0, 0);
             holder.itemView.setLayoutParams(params);
             holder.iv.setBackgroundResource(mDatas.get(position%num));
+            //缩放的焦点
             holder.itemView.setPivotX(0);
-            holder.itemView.setPivotY(width / 2);
-            holder.itemView.setScaleX(STAY_SCALE);
-            holder.itemView.setScaleY(STAY_SCALE);
+            holder.itemView.setPivotY(height / 2);
         }
 
         @Override
@@ -116,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             super.onScrollStateChanged(recyclerView, newState);
             if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-
+                //自动轮播时在这个地方发送消息处理
             }
         }
 
@@ -131,43 +128,31 @@ public class MainActivity extends AppCompatActivity {
 
         View snapingView = mSnapHelper.findSnapView(mLinearLayoutManager);
         int snapingViewPosition = rv.getChildAdapterPosition(snapingView);
-        Log.v("yxw", "snapingViewPosition:" + snapingViewPosition);
-        int currentSnapingOffset =
-                mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, snapingView)[0];
-        int dis = Math.abs(currentSnapingOffset);
-        float offset = 1 - (1 - STAY_SCALE) * ((float) dis / width);
-        snapingView.setScaleX(offset);
-        snapingView.setScaleY(offset);
 
         View leftSnapingView = mLinearLayoutManager.findViewByPosition(snapingViewPosition - 1);
         View rightSnapingView = mLinearLayoutManager.findViewByPosition(snapingViewPosition + 1);
 
+        setViewChange(snapingView);
         if (rightSnapingView != null) {
-            int rightSnapingOffset = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager,
-                    rightSnapingView)[0];
-            Log.v("yxw", "rightSnapingOffset:" + rightSnapingOffset);
-            dis = Math.abs(rightSnapingOffset);
-            if (dis > width) {
-                offset = STAY_SCALE;
-            } else {
-                offset = 1 - (1 - STAY_SCALE) * ((float) dis / width);
-            }
-            rightSnapingView.setScaleX(offset);
-            rightSnapingView.setScaleY(offset);
+            setViewChange(rightSnapingView);
         }
         if (leftSnapingView != null) {
-            int leftSnapingOffset = mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager,
-                    leftSnapingView)[0];
-            Log.v("yxw", "leftSnapingOffset:" + leftSnapingOffset);
-            dis = Math.abs(leftSnapingOffset);
-            if (dis > width) {
-                offset = STAY_SCALE;
-            } else {
-                offset = 1 - (1 - STAY_SCALE) * ((float) dis / width);
-            }
-            leftSnapingView.setScaleX(offset);
-            leftSnapingView.setScaleY(offset);
+            setViewChange(leftSnapingView);
         }
+    }
+
+    private void setViewChange(View viewChange) {
+        int snapingOffset =
+                mSnapHelper.calculateDistanceToFinalSnap(mLinearLayoutManager, viewChange)[0];
+        int dis = Math.abs(snapingOffset);
+        float offset;
+        if (dis > height) {
+            offset = STAY_SCALE;
+        } else {
+            offset = 1 - (1 - STAY_SCALE) * ((float) dis / height);
+        }
+        viewChange.setScaleX(offset);
+        viewChange.setScaleY(offset);
     }
 
     private class LeftSnapHelper extends PagerSnapHelper {
